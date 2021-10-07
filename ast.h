@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <variant>
+#include <string>
 
 
 /**
@@ -82,7 +83,8 @@ class BinaryExpr : public Expr {
 public:
   /// Enumeration of binary operators.
   enum class Kind {
-    ADD
+    ADD,
+    SUB
   };
 
 public:

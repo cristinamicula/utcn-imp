@@ -21,6 +21,7 @@ enum class Opcode : uint8_t {
   CALL,
 
   ADD,
+  SUB,
   RET,
 
   JUMP_FALSE,

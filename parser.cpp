@@ -175,10 +175,15 @@ std::shared_ptr<Expr> Parser::ParseCallExpr()
 std::shared_ptr<Expr> Parser::ParseAddSubExpr()
 {
   std::shared_ptr<Expr> term = ParseCallExpr();
-  while (Current().Is(Token::Kind::PLUS)) {
+  while (Current().Is(Token::Kind::PLUS) || Current().Is(Token::Kind::MINUS)) {
     lexer_.Next();
     auto rhs = ParseCallExpr();
-    term = std::make_shared<BinaryExpr>(BinaryExpr::Kind::ADD, term, rhs);
+    if(Current().Is(Token::Kind::PLUS)){
+      term = std::make_shared<BinaryExpr>(BinaryExpr::Kind::ADD, term, rhs);
+    }
+    else {
+      term = std::make_shared<BinaryExpr>(BinaryExpr::Kind::SUB, term, rhs);
+    }
   }
   return term;
 }
