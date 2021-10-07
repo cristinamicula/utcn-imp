@@ -55,8 +55,8 @@ void Interp::Run()
         continue;
       }
       case Opcode::SUB: {
-        auto lhs = PopInt();
         auto rhs = PopInt();
+        auto lhs = PopInt();
         Push(lhs - rhs);
         continue;
       }
