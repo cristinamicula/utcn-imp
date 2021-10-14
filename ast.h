@@ -84,7 +84,7 @@ class IntExpr : public Expr {
 public:
   IntExpr(uint64_t intValue) :Expr(Kind::INT), intValue_(intValue){}
 
-  const uint64_t GetIntValue() const {return intValue_; }
+  uint64_t GetIntValue() const {return intValue_; }
 
 private:
   /* data */
