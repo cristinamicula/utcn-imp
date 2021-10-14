@@ -84,8 +84,15 @@ public:
   /// Return the string value.
   std::string_view GetString() const
   {
-    assert(Is(Kind::STRING) && "not an identifier");
+    assert(Is(Kind::STRING) && "not a string ");
     return *value_.StringValue;
+  }
+
+  /// Return the int value.
+  uint64_t GetInt() const
+  {
+    assert(Is(Kind::INT) && "not an int");
+    return value_.IntValue;
   }
 
   /// Copy operator.
