@@ -17,6 +17,10 @@ Token::Token(const Token &that)
       value_.StringValue = new std::string(*that.value_.StringValue);
       break;
     }
+    case Kind::INT: {
+      value_.IntValue = that.value_.IntValue;
+      break;
+    }
     default: {
       break;
     }
@@ -42,6 +46,10 @@ Token &Token::operator=(const Token &that)
     case Kind::STRING:
     case Kind::IDENT: {
       value_.StringValue = new std::string(*that.value_.StringValue);
+      break;
+    }
+    case Kind::INT: {
+      value_.IntValue = that.value_.IntValue;
       break;
     }
     default: {
@@ -81,6 +89,15 @@ Token Token::String(const Location &l, const std::string &str)
   tk.value_.StringValue = new std::string(str);
   return tk;
 }
+
+// -----------------------------------------------------------------------------
+Token Token::IntValue(const Location &l, uint64_t intValue)
+{
+  Token tk(l, Kind::INT);
+  tk.value_.IntValue = intValue;
+  return tk;
+}
+
 
 // -----------------------------------------------------------------------------
 void Token::Print(std::ostream &os) const
@@ -198,6 +215,26 @@ const Token &Lexer::Next()
       NextChar();
       return tk_ = Token::String(loc, word);
     }
+    case '0': 
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+    {
+        uint64_t intValue = 0;
+        while (isdigit(chr_)){
+          intValue = intValue*10 + (chr_ - '0');
+          NextChar();
+        }
+
+        return tk_ = Token::IntValue(loc, intValue);
+    }
+
     default: {
       if (IsIdentStart(chr_)) {
         std::string word;
