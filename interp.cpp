@@ -56,15 +56,51 @@ void Interp::Run()
       case Opcode::ADD: {
         auto rhs = PopInt();
         auto lhs = PopInt();
+        if(INT64_MAX - lhs < rhs){
+          throw RuntimeError("cannot add integers");
+        }
         Push(lhs + rhs);
         continue;
       }
+      
       case Opcode::SUB: {
         auto rhs = PopInt();
         auto lhs = PopInt();
         Push(lhs - rhs);
         continue;
       }
+
+      case Opcode::MULT: {
+        auto rhs = PopInt();
+        auto lhs = PopInt();
+        if(INT64_MAX / lhs < rhs){
+          throw RuntimeError("cannot multiply integers");
+        }
+        Push(lhs * rhs);
+        continue;
+      }
+
+      case Opcode::DIV: {
+        auto rhs = PopInt();
+        auto lhs = PopInt();
+        Push(lhs / rhs);
+        continue;
+      }
+
+       case Opcode::MOD: {
+        auto rhs = PopInt();
+        auto lhs = PopInt();
+        Push(lhs % rhs);
+        continue;
+      }
+
+      case Opcode::D_EQUAL: {
+        auto rhs = PopInt();
+        auto lhs = PopInt();
+        Push ((int64_t)(lhs == rhs));
+        continue;
+      }
+
       case Opcode::RET: {
         auto depth = prog_.Read<unsigned>(pc_);
         auto nargs = prog_.Read<unsigned>(pc_);

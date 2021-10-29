@@ -23,6 +23,10 @@ enum class Opcode : uint8_t {
 
   ADD,
   SUB,
+  MULT, 
+  DIV,
+  MOD,
+  D_EQUAL,
   RET,
 
   JUMP_FALSE,
