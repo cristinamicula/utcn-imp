@@ -102,11 +102,12 @@ void Codegen::BlockScope::AddVariable(const std::string &name, uint32_t loc)
 
   auto inserted = localVariables_.emplace(name, loc).second;
   assert(inserted && "Varible with that name already exists in scope");
-
+  std::cout << "ADD\n";
 }
 
 // -----------------------------------------------------------------------------
 int Codegen::BlockScope::GetNumberOfVariables() const {
+  std::cout << "X: " << localVariables_.size() << "\n\n" << std::endl;
   return (int)(localVariables_.size());
 }
 
@@ -195,21 +196,19 @@ void Codegen::LowerBlockStmt(Scope &scope, const BlockStmt &blockStmt)
 {
   unsigned depthIn = depth_;
 
-  const std::map<std::string, uint32_t> localVariables ;
-
-  BlockScope blockScope(&scope, localVariables);
+  BlockScope blockScope(&scope);
   for (auto &stmt : blockStmt) {
     LowerStmt(blockScope, *stmt);
   }
 
 
-  int number = scope.GetNumberOfVariables();
+  int number = blockScope.GetNumberOfVariables();
   for(int i = 0; i < number; i++){
     
     EmitPop();
   }
 
-  std::cout<<"depth_: " << depth_ << "   depthIn: " << depthIn; 
+  std::cout<<"depth_: " << depth_ << "   depthIn: " << depthIn << " " << number << " " << std::flush << std::endl; 
   assert(depth_ == depthIn && "mismatched block depth on exit");
 }
 

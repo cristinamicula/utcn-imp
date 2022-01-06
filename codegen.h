@@ -121,9 +121,8 @@ private:
   /// Scope for a block of statements.
   class BlockScope final : public Scope {
   public:
-    BlockScope(const Scope *parent, const std::map<std::string, uint32_t> localVariables) 
-    : Scope(parent) 
-    , localVariables_(localVariables)
+    BlockScope(const Scope *parent) 
+    : Scope(parent)
     {}
 
     Binding Lookup(const std::string &name) const override;
