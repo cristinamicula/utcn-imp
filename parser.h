@@ -41,6 +41,8 @@ private:
   std::shared_ptr<WhileStmt> ParseWhileStmt();
   /// Parse a if.
   std::shared_ptr<IfStmt> ParseIfStmt();
+  /// Parse a if.
+  std::shared_ptr<LetStmt> ParseLetStmt();
 
   /// Parse a single expression.
   //TODO: change this implementation

@@ -90,6 +90,7 @@ std::shared_ptr<Stmt> Parser::ParseStmt()
     case Token::Kind::WHILE: return ParseWhileStmt();
     case Token::Kind::LBRACE: return ParseBlockStmt();
     case Token::Kind::IF: return ParseIfStmt();
+    case Token::Kind::LET: return ParseLetStmt();
     default: return std::make_shared<ExprStmt>(ParseExpr());
   }
 }
@@ -150,6 +151,22 @@ std::shared_ptr<IfStmt> Parser::ParseIfStmt()
     return std::make_shared<IfStmt>(cond, stmt, elseStmt);
   }
   return std::make_shared<IfStmt>(cond, stmt, nullptr);
+}
+
+
+// -----------------------------------------------------------------------------
+std::shared_ptr<LetStmt> Parser::ParseLetStmt(){
+  Check(Token::Kind::LET);
+  Expect(Token::Kind::IDENT);
+  std::string name(Current().GetIdent());
+  Expect(Token::Kind::COLON);
+  Expect(Token::Kind::IDENT);
+  std::string type(Current().GetIdent());
+  Expect(Token::Kind::EQUAL);
+  lexer_.Next();
+  auto initExpr = ParseExpr();
+  
+  return std::make_shared<LetStmt>(name, type, initExpr);
 }
 
 // -----------------------------------------------------------------------------

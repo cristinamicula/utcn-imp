@@ -38,6 +38,23 @@ Codegen::Binding Codegen::GlobalScope::Lookup(const std::string &name) const
 }
 
 // -----------------------------------------------------------------------------
+void Codegen::GlobalScope::AddVariable(const std::string &name, uint32_t loc)
+{
+  assert(!"cannot add local variable to global scope");
+}
+
+// -----------------------------------------------------------------------------
+int Codegen::GlobalScope::GetNumberOfVariables() const {
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t Codegen::GlobalScope::GetVariableLocation(std::string variable) const {
+  assert(!"function scope does not have variables");
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
 Codegen::Binding Codegen::FuncScope::Lookup(const std::string &name) const
 {
   // Find the name among arguments.
@@ -51,11 +68,54 @@ Codegen::Binding Codegen::FuncScope::Lookup(const std::string &name) const
 }
 
 // -----------------------------------------------------------------------------
+void Codegen::FuncScope::AddVariable(const std::string &name, uint32_t loc)
+{
+  assert(!"cannot add local variable to function scope");
+}
+
+// -----------------------------------------------------------------------------
+int Codegen::FuncScope::GetNumberOfVariables() const {
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+uint32_t Codegen::FuncScope::GetVariableLocation(std::string variable) const {
+  assert(!"function scope does not have variables");
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
 Codegen::Binding Codegen::BlockScope::Lookup(const std::string &name) const
 {
-  // TODO: nothing defined here yet.
+  if (auto it = localVariables_.find(name); it != localVariables_.end()){
+    Binding b;
+    b.Kind = Binding::Kind::LOCAL_VAR;
+    b.Index = it->second;
+    return b;
+  }
   return parent_->Lookup(name);
 }
+
+// -----------------------------------------------------------------------------
+void Codegen::BlockScope::AddVariable(const std::string &name, uint32_t loc) 
+{
+
+  auto inserted = localVariables_.emplace(name, loc).second;
+  assert(inserted && "Varible with that name already exists in scope");
+
+}
+
+// -----------------------------------------------------------------------------
+int Codegen::BlockScope::GetNumberOfVariables() const {
+  return (int)(localVariables_.size());
+}
+
+
+// -----------------------------------------------------------------------------
+uint32_t Codegen::BlockScope::GetVariableLocation(std::string variable) const {
+  return localVariables_.at(variable);
+}
+
 
 // -----------------------------------------------------------------------------
 std::unique_ptr<Program> Codegen::Translate(const Module &mod)
@@ -104,8 +164,9 @@ std::unique_ptr<Program> Codegen::Translate(const Module &mod)
   return std::make_unique<Program>(std::move(code_));
 }
 
+
 // -----------------------------------------------------------------------------
-void Codegen::LowerStmt(const Scope &scope, const Stmt &stmt)
+void Codegen::LowerStmt(Scope &scope, const Stmt &stmt)
 {
   switch (stmt.GetKind()) {
     case Stmt::Kind::BLOCK: {
@@ -117,6 +178,9 @@ void Codegen::LowerStmt(const Scope &scope, const Stmt &stmt)
     case Stmt::Kind::IF: {
       return LowerIfStmt(scope, static_cast<const IfStmt &> (stmt));
     }
+    case Stmt::Kind::LET: {
+      return LowerLetStmt(scope, static_cast<const LetStmt &> (stmt));
+    }
     case Stmt::Kind::EXPR: {
       return LowerExprStmt(scope, static_cast<const ExprStmt &>(stmt));
     }
@@ -127,20 +191,30 @@ void Codegen::LowerStmt(const Scope &scope, const Stmt &stmt)
 }
 
 // -----------------------------------------------------------------------------
-void Codegen::LowerBlockStmt(const Scope &scope, const BlockStmt &blockStmt)
+void Codegen::LowerBlockStmt(Scope &scope, const BlockStmt &blockStmt)
 {
   unsigned depthIn = depth_;
 
-  BlockScope blockScope(&scope);
+  const std::map<std::string, uint32_t> localVariables ;
+
+  BlockScope blockScope(&scope, localVariables);
   for (auto &stmt : blockStmt) {
     LowerStmt(blockScope, *stmt);
   }
 
+
+  int number = scope.GetNumberOfVariables();
+  for(int i = 0; i < number; i++){
+    
+    EmitPop();
+  }
+
+  std::cout<<"depth_: " << depth_ << "   depthIn: " << depthIn; 
   assert(depth_ == depthIn && "mismatched block depth on exit");
 }
 
 // -----------------------------------------------------------------------------
-void Codegen::LowerWhileStmt(const Scope &scope, const WhileStmt &whileStmt)
+void Codegen::LowerWhileStmt(Scope &scope, const WhileStmt &whileStmt)
 {
   auto entry = MakeLabel();
   auto exit = MakeLabel();
@@ -154,7 +228,7 @@ void Codegen::LowerWhileStmt(const Scope &scope, const WhileStmt &whileStmt)
 }
 
 // -----------------------------------------------------------------------------
-void Codegen::LowerIfStmt(const Scope &scope, const IfStmt &ifStmt)
+void Codegen::LowerIfStmt(Scope &scope, const IfStmt &ifStmt)
 {
 
   auto true_branch = MakeLabel();
@@ -175,14 +249,27 @@ void Codegen::LowerIfStmt(const Scope &scope, const IfStmt &ifStmt)
 }
 
 // -----------------------------------------------------------------------------
-void Codegen::LowerReturnStmt(const Scope &scope, const ReturnStmt &retStmt)
+void Codegen::LowerLetStmt(Scope &scope, const LetStmt &letStmt)
+{
+  auto name = letStmt.GetName();
+  auto type = letStmt.GetType();
+  const auto &initExpr = letStmt.GetInitExpr();
+  
+  LowerExpr(scope, initExpr);
+  int loc = depth_;
+  
+  scope.AddVariable(name, loc);
+}
+
+// -----------------------------------------------------------------------------
+void Codegen::LowerReturnStmt(Scope &scope, const ReturnStmt &retStmt)
 {
   LowerExpr(scope, retStmt.GetExpr());
   EmitReturn();
 }
 
 // -----------------------------------------------------------------------------
-void Codegen::LowerExprStmt(const Scope &scope, const ExprStmt &exprStmt)
+void Codegen::LowerExprStmt(Scope &scope, const ExprStmt &exprStmt)
 {
   LowerExpr(scope, exprStmt.GetExpr());
   EmitPop();
@@ -223,6 +310,10 @@ void Codegen::LowerRefExpr(const Scope &scope, const RefExpr &expr)
     case Binding::Kind::ARG: {
       EmitPeek(depth_ + binding.Index + 1);
       return;
+    }
+    case Binding::Kind::LOCAL_VAR: {
+      //emit peek depth_ - smt smt to get where 'a' is 
+      EmitPeek(depth_ - scope.GetVariableLocation(expr.GetName()));
     }
   }
 }

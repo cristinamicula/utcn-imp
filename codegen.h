@@ -39,6 +39,7 @@ private:
       FUNC,
       PROTO,
       ARG,
+      LOCAL_VAR,
     } Kind;
 
     union {
@@ -59,6 +60,12 @@ private:
 
     virtual Binding Lookup(const std::string &name) const = 0;
 
+    virtual void AddVariable(const std::string &name, uint32_t loc) = 0;
+
+    virtual int GetNumberOfVariables() const = 0;
+
+    virtual uint32_t GetVariableLocation(std::string variable) const = 0;
+
   protected:
     const Scope *parent_;
   };
@@ -76,6 +83,12 @@ private:
     }
 
     Binding Lookup(const std::string &name) const override;
+
+    void AddVariable(const std::string &name, uint32_t loc) override; 
+
+    int GetNumberOfVariables() const override;
+
+    uint32_t GetVariableLocation(std::string variable) const override;
 
   private:
     const std::map<std::string, Label> &funcs_;
@@ -95,6 +108,12 @@ private:
 
     Binding Lookup(const std::string &name) const override;
 
+    void AddVariable(const std::string &name, uint32_t loc) override;
+
+    int GetNumberOfVariables() const override;
+
+    uint32_t GetVariableLocation(std::string variable) const override;
+
   private:
     const std::map<std::string, uint32_t> &args_;
   };
@@ -102,24 +121,38 @@ private:
   /// Scope for a block of statements.
   class BlockScope final : public Scope {
   public:
-    BlockScope(const Scope *parent) : Scope(parent) {}
+    BlockScope(const Scope *parent, const std::map<std::string, uint32_t> localVariables) 
+    : Scope(parent) 
+    , localVariables_(localVariables)
+    {}
 
     Binding Lookup(const std::string &name) const override;
+
+    void AddVariable(const std::string &name, uint32_t loc) override;
+
+    int GetNumberOfVariables() const override;
+    
+    uint32_t GetVariableLocation(std::string variable) const override; 
+
+    private: 
+      std::map<std::string, uint32_t> localVariables_;
   };
 
 private:
   /// Lowers a single statement.
-  void LowerStmt(const Scope &scope, const Stmt &stmt);
+  void LowerStmt(Scope &scope, const Stmt &stmt);
   /// Lowers a block statement.
-  void LowerBlockStmt(const Scope &scope, const BlockStmt &blockStmt);
+  void LowerBlockStmt(Scope &scope, const BlockStmt &blockStmt);
   /// Lowers a while statement.
-  void LowerWhileStmt(const Scope &scope, const WhileStmt &whileStmt);
+  void LowerWhileStmt(Scope &scope, const WhileStmt &whileStmt);
   /// Lowers a if statement.
-  void LowerIfStmt(const Scope &scope, const IfStmt &ifStmt);
+  void LowerIfStmt(Scope &scope, const IfStmt &ifStmt);
+  /// Lowers a if statement.
+  void LowerLetStmt(Scope &scope, const LetStmt &letStmt);
   /// Lowers a return statement.
-  void LowerReturnStmt(const Scope &scope, const ReturnStmt &returnStmt);
+  void LowerReturnStmt(Scope &scope, const ReturnStmt &returnStmt);
   /// Lowers a standalone expression statement.
-  void LowerExprStmt(const Scope &scope, const ExprStmt &exprStmt);
+  void LowerExprStmt(Scope &scope, const ExprStmt &exprStmt);
 
   /// Lowers a single expression.
   void LowerExpr(const Scope &scope, const Expr &expr);

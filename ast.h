@@ -24,7 +24,8 @@ public:
     WHILE,
     IF,
     EXPR,
-    RETURN
+    RETURN,
+    LET
   };
 
 public:
@@ -265,6 +266,33 @@ private:
   /// Expression to be executed in the loop body.
   std::shared_ptr<Stmt> stmt_;
   std::shared_ptr<Stmt> elseStmt_;
+};
+
+
+/**
+ * Let statement.
+ *
+ * Let <name>:<type> =  <expr>
+ */
+class LetStmt final : public Stmt {
+public:
+  LetStmt(const std::string& name, const std::string& type, std::shared_ptr<Expr> initExpr)
+  : Stmt(Kind::LET)
+  , name_(name)
+  , type_(type)
+  , initExpr_(initExpr)
+  {
+  }
+
+  const std::string& GetName() const {return name_; }
+  const std::string& GetType() const {return type_; }
+  const Expr &GetInitExpr() const {return *initExpr_; }
+
+
+private:
+  std::string name_;
+  std::string type_;
+  std::shared_ptr<Expr> initExpr_;
 };
 
 /**

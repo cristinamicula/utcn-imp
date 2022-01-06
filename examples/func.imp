@@ -1,11 +1,19 @@
 func print_int(a: int): int = "print_int"
 func read_int(): int = "read_int"
 
+func exp_helper(a: int, n: int, b: int): int{
+  if (n % 2 == 0) {
+    return b * b
+  } else {
+    return b * b * a
+  }
+}
+
 func exp(a: int, n: int): int {
   if (n == 0) {
     return 1
   } else {
-    return a * exp(a, n - 1)
+    return exp_helper(a, n, exp(a, n/2))
   }
 }
 

@@ -1,0 +1,10 @@
+
+func print_int(a: int): int = "print_int"
+func read_int(): int = "read_int"
+
+func inc_b(a: int): int {
+  let b : int = a + 1;
+  return b;
+}
+
+print_int(inc_b(read_int()))
